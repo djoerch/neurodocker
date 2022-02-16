@@ -1,0 +1,53 @@
+# Instructions to install 3DSlicer.
+#
+# Website: https://www.slicer.org/
+# License: https://slicer.readthedocs.io/en/latest/user_guide/about.html#license
+# Available Versions: https://slicer-packages.kitware.com/#collection/5f4474d0e1d8c75dfc70547e/folder/5f4474d0e1d8c75dfc705482
+
+name: slicer
+#alert: ...
+binaries:
+  arguments:
+    required:
+    - version
+    optional:
+      install_path: /opt/Slicer-{{ self.version }}-linux-amd64
+      exclude_paths: ""
+  urls:
+    "4.3.1": https://slicer-packages.kitware.com/api/v1/item/60add8a9ae4540bf6a89c2e4/download
+  dependencies:
+    apt:
+    - bc
+    - ca-certificates
+    - curl
+    - dc
+    - file
+    - libfontconfig1
+    - libfreetype6
+    - libgl1-mesa-dev
+    - libgl1-mesa-dri
+    - libglu1-mesa
+    - libglu1-mesa-dev
+    - libgomp1
+    - libice6
+    - libnss3
+    - libopenblas-base
+    - libpulse-dev
+    - libxcursor1
+    - libxft2
+    - libxinerama1
+    - libxcb-xinerama0
+    - libxrandr2
+    - libxrender1
+    - libxt6
+    - sudo
+    - wget
+  env:
+    PATH: "{{ self.install_path }}/bin:{{ self.install_path }}:{{ self.install_path }}/lib/Slicer-4.3/cli-modules:$PATH"
+    LD_LIBRARY_PATH: "{{ self.install_path }}/lib/Slicer-4.3:$LD_LIBRARY_PATH"
+  instructions: |
+    {{ self.install_dependencies() }}
+    echo "Downloading 3DSlicer ..."
+    mkdir -p {{ self.install_path }}
+    curl -fL {{ self.urls[self.version] }} \
+      | tar -xz -C {{ self.install_path }} --strip-components 1
