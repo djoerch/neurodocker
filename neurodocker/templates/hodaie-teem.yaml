@@ -1,0 +1,62 @@
+# Instructions to install Hodaie-teem.
+#
+# Website: https://github.com/djoerch/hodaie-teem/tree/dj_build_2021
+
+name: teem
+#alert: ...
+source:
+  arguments:
+    required:
+    - version
+    optional:
+      install_path: /opt/hodaie-teem-{{ self.version }}-linux-amd64
+      exclude_paths: ""
+      repo: https://github.com/djoerch/hodaie-teem
+  dependencies:
+    apt:
+    - bc
+    - ca-certificates
+    - curl
+    - dc
+    - file
+    - libfontconfig1
+    - libfreetype6
+    - libgl1-mesa-dev
+    - libgl1-mesa-dri
+    - libglu1-mesa
+    - libglu1-mesa-dev
+    - libgomp1
+    - libice6
+    - libnss3
+    - libopenblas-base
+    - libpulse-dev
+    - libxcursor1
+    - libxft2
+    - libxinerama1
+    - libxcb-xinerama0
+    - libxrandr2
+    - libxrender1
+    - libxt6
+    - sudo
+    - wget
+  env:
+    PATH: "{{ self.install_path }}/teem-build/bin:$PATH"
+  instructions: |
+    {{ self.install_dependencies() }}
+    echo "Downloading hodai-teem from github ..."
+    git clone {{ self.repo }} {{ self.install_path }}
+    cd {{ self.install_path }}
+    {% if self.version != "1.11.0"-%}
+    echo "Version {{ self.version }} not supported!"
+    exit 255
+    {% endif -%}
+    git checkout dj_build_2021
+    cd -
+    mkdir {{ self.install_path }}/teem-build
+    cd {{ self.install_path }}/teem-build
+    cmake -Wno-dev -D Teem_PNG=OFF -D BUILD_SHARED_LIBS=ON \
+      -D Teem_VTK_TOOLKITS_IPATH=/opt/miniconda-latest/lib/python3.8/site-packages/vtkmodules \
+      {{ self.install_path }}
+    make -j8
+    make install
+    cd -
