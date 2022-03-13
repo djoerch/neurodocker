@@ -1,0 +1,43 @@
+# Instructions to install 3DSlicer.
+#
+# Website: https://github.com/scilus/scilpy
+
+name: scilpy
+#alert: ...
+binaries:
+  arguments:
+    required:
+    - version
+    optional:
+      install_path: /opt/scilpy-{{ self.version }}-linux-amd64
+      exclude_paths: ""
+  urls:
+    "1.2.2": https://github.com/scilus/scilpy/archive/refs/tags/1.2.2.tar.gz
+  dependencies:
+    apt:
+    - curl
+    - libblas-dev
+    - liblapack-dev
+    - libfreetype6-dev
+    - pkg-config
+    - libx11-6
+    - libgl1-mesa-glx
+    - mesa-common-dev
+    - mesa-utils
+    - freeglut3-dev
+    - libfontconfig1
+    - libxrender1
+  env:
+    PATH_TO_VENV_SCILPY: /opt/venv_scilpy
+  instructions: |
+    {{ self.install_dependencies() }}
+    echo "Prepare scily virtual environment ..."
+    pip3 install virtualenv
+    virtualenv --system-site-packages -p $(which python3) /opt/venv_scilpy
+    . /opt/venv_scilpy/bin/activate
+    echo "Downloading scilpy release ..."
+    mkdir -p {{ self.install_path }}
+    curl -fL {{ self.urls[self.version] }} \
+      | tar -xz -C {{ self.install_path }} --strip-components 1
+    echo "Installing scilpy ... "
+    pip install -e {{ self.install_path }}
