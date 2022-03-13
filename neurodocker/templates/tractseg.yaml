@@ -1,4 +1,4 @@
-# Instructions to install 3DSlicer.
+# Instructions to install TractSeg.
 #
 # Website: https://github.com/MIC-DKFZ/TractSeg
 
@@ -33,3 +33,4 @@ binaries:
     echo "Installing tractseg ... "
     pip install -e {{ self.install_path }}
     pip install dipy==1.4.1
+    pip install torch==1.11.0
