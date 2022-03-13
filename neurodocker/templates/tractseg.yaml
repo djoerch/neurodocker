@@ -1,0 +1,35 @@
+# Instructions to install 3DSlicer.
+#
+# Website: https://github.com/MIC-DKFZ/TractSeg
+
+name: tractseg
+#alert: ...
+binaries:
+  arguments:
+    required:
+    - version
+    optional:
+      install_path: /opt/tractseg-{{ self.version }}-linux-amd64
+      exclude_paths: ""
+  urls:
+    "2.5": https://github.com/MIC-DKFZ/TractSeg/archive/refs/tags/v2.5.tar.gz
+  dependencies:
+    apt:
+    - curl
+    - libfreetype6-dev
+    - pkg-config
+  env:
+    PATH_TO_VENV_TRACTSEG: /opt/venv_tractseg
+  instructions: |
+    {{ self.install_dependencies() }}
+    echo "Prepare tractseg virtual environment ..."
+    pip3 install virtualenv
+    virtualenv --system-site-packages -p $(which python3) /opt/venv_tractseg
+    . /opt/venv_tractseg/bin/activate
+    echo "Downloading tractseg release ..."
+    mkdir -p {{ self.install_path }}
+    curl -fL {{ self.urls[self.version] }} \
+      | tar -xz -C {{ self.install_path }} --strip-components 1
+    echo "Installing tractseg ... "
+    pip install -e {{ self.install_path }}
+    pip install dipy==1.4.1
