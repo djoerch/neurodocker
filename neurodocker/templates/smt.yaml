@@ -1,0 +1,37 @@
+# Instructions to install SMT.
+#
+# Website: https://github.com/ekaden/smt
+
+name: smt
+#alert: ...
+binaries:
+  arguments:
+    required:
+    - version
+    optional:
+      install_path: /opt/smt-{{ self.version }}-linux-amd64
+      exclude_paths: ""
+  urls:
+    "0.4": https://github.com/ekaden/smt/archive/refs/tags/v0.4.tar.gz
+  dependencies:
+    apt:
+    - curl
+    - libfreetype6-dev
+    - pkg-config
+    - cmake
+  env:
+    PATH: "{{ self.install_path }}/build:$PATH"
+  instructions: |
+    {{ self.install_dependencies() }}
+    echo "Downloading SMT release ..."
+    mkdir -p {{ self.install_path }}
+    curl -fL {{ self.urls[self.version] }} \
+      | tar -xz -C {{ self.install_path }} --strip-components 1
+    echo "Installing SMT ... "
+    cd {{ self.install_path }}
+    mkdir build
+    cd build
+    cmake ../
+    make -j8
+    make install
+    cd
