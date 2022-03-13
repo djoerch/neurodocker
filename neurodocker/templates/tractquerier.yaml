@@ -1,0 +1,33 @@
+# Instructions to install TractQuerier.
+#
+# Website: https://github.com/djoerch/tract_querier/tree/dj_python_three
+
+name: tractquerier
+#alert: ...
+binaries:
+  arguments:
+    required:
+    - version
+    optional:
+      install_path: /opt/tractquerier-{{ self.version }}-linux-amd64
+      exclude_paths: ""
+  urls:
+    "dj_python_three": https://github.com/djoerch/tract_querier.git
+  dependencies:
+    apt:
+    - curl
+    - git
+  env:
+    PATH_TO_VENV_TQ: /opt/venv_tq
+  instructions: |
+    {{ self.install_dependencies() }}
+    echo "Prepare TractQuerier virtual environment ..."
+    pip3 install virtualenv
+    virtualenv --system-site-packages -p $(which python3) /opt/venv_tq
+    . /opt/venv_tq/bin/activate
+    echo "Downloading TractQuerier release ..."
+    git clone https://github.com/djoerch/tract_querier.git {{ self.install_path }}
+    cd {{ self.install_path }}
+    git checkout {{ self.version }}
+    pip install -r requirements.txt
+    pip install -e .
