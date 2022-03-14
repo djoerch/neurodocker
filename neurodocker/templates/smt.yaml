@@ -12,7 +12,7 @@ binaries:
       install_path: /opt/smt-{{ self.version }}-linux-amd64
       exclude_paths: ""
   urls:
-    "0.4": https://github.com/ekaden/smt/archive/refs/tags/v0.4.tar.gz
+    "0.4": https://github.com/ekaden/smt.git
   dependencies:
     apt:
     - curl
@@ -25,8 +25,9 @@ binaries:
     {{ self.install_dependencies() }}
     echo "Downloading SMT release ..."
     mkdir -p {{ self.install_path }}
-    curl -fL {{ self.urls[self.version] }} \
-      | tar -xz -C {{ self.install_path }} --strip-components 1
+    git clone https://github.com/ekaden/smt.git {{ self.install_path }}
+    cd {{ self.install_path }}
+    git checkout v{{ self.version }}
     echo "Installing SMT ... "
     cd {{ self.install_path }}
     mkdir build
