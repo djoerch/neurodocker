@@ -8,6 +8,8 @@
 # Website: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/
 # License: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Licence
 # Available Versions: https://fsl.fmrib.ox.ac.uk/fsldownloads/manifest.json
+#
+# Documentation for source build: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FslInstallation/SourceCode
 
 name: fsl
 alert: FSL is non-free. If you are considering commercial use of FSL, please consult the relevant license(s).
@@ -110,3 +112,220 @@ binaries:
     echo "Removing bundled with FSLeyes libz likely incompatible with the one from OS"
     rm -f {{ self.install_path }}/bin/FSLeyes/libz.so.1
     {% endif -%}
+
+source:
+  arguments:
+    required:
+      - version
+    optional:
+      install_path: /opt/fsl-{{ self.version }}
+      build_processes: "8"
+      url: https://fsl.fmrib.ox.ac.uk/fsldownloads/fsl-{{ self.version }}-sources.tar.gz
+  dependencies:
+    apt:
+      - ca-certificates
+      - curl
+      - tar
+      - nano
+      - libexpat-dev
+      - libx11-dev
+      - mesa-utils
+      - zlib1g-dev
+      - libblas-dev
+      - liblapack-dev
+      - build-essential
+      - autotools-dev
+      - automake
+      - libxml2-dev
+      - libxml++2.6-dev
+      - libopenblas-dev
+      - nvidia-cuda-toolkit
+      - git
+      - python
+      - python-setuptools
+      - vtk7
+      - libvtk7-dev
+    yum:
+      - expat-devel
+      - libX11-devel
+      - mesa-libGL-devel
+      - zlib-devel
+  env:
+    FSLDIR: "{{ self.install_path }}"
+  instructions: |
+    echo "Installation of FSL v{{ self.version}}..."
+    {% if self.version != "6.0.5.2"-%} \
+    echo "Version {{ self.version }} not supported!" \
+    echo "Need version==6.0.5.2!" \
+    exit 255 \
+    {% endif -%} \
+    {{ self.install_dependencies() }}
+    ls {{ self.install_path }}
+    echo \
+      "Removing words 'libxmlpp' and 'libxml2-2.9.2' from 'extras/build' ..."
+    sed -i 's/libxmlpp//g' "{{ self.install_path }}/extras/build"
+    sed -i 's/libxml2-2.9.2//g' "{{ self.install_path }}/extras/build"
+    echo \
+      "... done."
+    echo \
+      "Adding '-lopenblas' to 'LIBS' in Makefile of subpackages ..."
+    SUBPACKAGES="meshclass topup eddy CiftiLib-master bint fslsurface libmeshutils \
+      newmesh DiscreteOpt FastPDlib MSMRegLib avwutils bet2 cluster fast4 fdt film \
+      filmbabe first flameo flirt fnirt fugue gps lesions mcflirt melodic miscvis \
+      mist mm MSM oxford_asl possum ptx2 qboot randomise siena slicetimer susan swe \
+      tbss"
+    for subpackage in ${SUBPACKAGES}; \
+    do \
+        sed \
+          -e '/^LIBS/{s/$/ -lopenblas/}' \
+          -i "{{ self.install_path }}/src/${subpackage}/Makefile"; \
+    done
+    echo \
+      "... done."
+    echo \
+      "Adding '-lopenblas' to 'DLIBS' in Makefile of subpackages ..."
+    SUBPACKAGES="qboot fdt ptx2"
+    for subpackage in ${SUBPACKAGES}; \
+    do \
+        sed \
+          -e '/^DLIBS/{s/$/ -lopenblas/}' \
+          -i "{{ self.install_path }}/src/${subpackage}/Makefile"; \
+    done
+    echo \
+      "... done."
+    echo \
+      "Adding '-lm' to 'LIBS' in Makefile of 'miscvis' \
+      (the order of libs matters; -lm is used by -lpng \
+      and must therefore appear after -lpng) ..."
+    sed -e '/^LIBS/{s/$/ -lm/}' -i "{{ self.install_path }}/src/miscvis/Makefile"
+    echo \
+      "... done."
+    echo \
+      "Adding '-lopenblas' to 'LIBCC' in Makefile of 'siena' ..."
+    sed -e '/^LIBCC/{s/$/ -lopenblas/}' -i "{{ self.install_path }}/src/siena/Makefile"
+    echo \
+      "... done."
+    echo \
+      "Adding '-lopenblas' to 'CLIBS' in Makefile of 'cluster' ..."
+    sed -e '/^CLIBS/{s/$/ -lopenblas/}' -i "{{ self.install_path }}/src/cluster/Makefile"
+    echo \
+      "... done."
+    echo \
+      "Adding '-lopenblas' to 'LDLIBS' \
+      and move '\${SQLITE_LIB}/libsqlite3.a' to the front in Makefile of 'mist' ..."
+    sed \
+      -e '/^LDLIBS/{s/^LDLIBS =/LDLIBS = ${SQLITE_LIB}\/libsqlite3.a/}' \
+      -i "{{ self.install_path }}/src/mist/Makefile"
+    sed \
+      -e '/LIBRT\}$/{s/${SQLITE_LIB}\/libsqlite3.a//}' \
+      -i "{{ self.install_path }}/src/mist/Makefile"
+    sed \
+      -e '/LIBRT\}$/{s/$/ -lopenblas/}' \
+      -i "{{ self.install_path }}/src/mist/Makefile"
+    echo \
+      "... done."
+    echo \
+      "Adding '-lopenblas' to 'FMBLIBS' in Makefile of 'first' ..."
+    sed -e '/^FMBLIBS/{s/$/ -lopenblas/}' -i "{{ self.install_path }}/src/first/Makefile"
+    echo \
+      "... done."
+    echo \
+      "Adding '-std=c++11' to 'CPPFLAGS' in Makefile of subpackages ..."
+    SUBPACKAGES='CiftiLib-master flameo'
+    for subpackage in ${SUBPACKAGES}; \
+    do \
+        sed \
+          -e '/^PROJNAME/a CPPFLAGS = -std=c++11' \
+          -i "{{ self.install_path }}/src/${subpackage}/Makefile"; \
+    done
+    echo \
+      "... done."
+    echo \
+      "Adding '-std=c++11' to 'OPTFLAGS' in Makefile of 'melodic' ..."
+    sed -e '/^OPTFLAGS/{s/$/ -std=c++11/}' -i "{{ self.install_path }}/src/melodic/Makefile"
+    echo \
+      "... done."
+    echo \
+      "Updating CUDA settings in 'buildSettings.mk' ..."
+    sed \
+      -e '/^CUDA_INSTALLATION/c CUDA_INSTALLATION = /usr' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e '/^LIB_CUDA/c LIB_CUDA = ${CUDA_INSTALLATION}/lib/x86_64-linux-gnu' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e '/^INC_CUDA/c INC_CUDA = ${CUDA_INSTALLATION}/include' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e '/^NVCC/c NVCC = ${CUDA_INSTALLATION}/bin/nvcc' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    CUDAVER=$(nvcc --version | grep release | sed 's/.*release \([0-9]\+\.[0-9]\).*/\1/')
+    sed \
+      -e "/^CUDAVER/c CUDAVER := \$(or \$(CUDAVER),${CUDAVER})" \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e "/^EDDYBUILDPARAMETERS/c EDDYBUILDPARAMETERS = \"cuda=1 CUDAVER=${CUDAVER}\"" \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    echo \
+      "... done."
+    echo \
+      "INFO: NOT adding section for CUDA version to 'config/common/supportedGencodes.sh' ..."    
+    echo \
+      "Updating library paths for 'libxml2' ..."
+    sed \
+      -e '/^INC_XML2/c INC_XML2 = /usr/include/libxml2' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    echo \
+      "... done."
+    echo \
+      "Updating library paths for 'libxml++-2.6' ..."
+    sed \
+      -e '/^INC_XML++ =/c INC_XML++ = /usr/include/libxml++-2.6' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e '/^INC_XML++CONF =/c INC_XML++CONF = /usr/lib/x86_64-linux-gnu/libxml++-2.6/include' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    echo \
+      "... done."
+    echo \
+      "Updating library paths for 'vtk' ..."
+    sed \
+      -e '/^VTKDIR_INC/c VTKDIR_INC = /usr/include/vtk-7.1' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e '/^VTKDIR_LIB/c VTKDIR_LIB = /usr/lib/x86_64-linux-gnu' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    sed \
+      -e '/^VTKSUFFIX/c VTKSUFFIX = -7.1' \
+      -i "{{ self.install_path }}/config/buildSettings.mk"
+    echo \
+      "... done."
+    echo \
+      "Setting up build environment ..."
+    export FSLDIR="{{ self.install_path }}"
+    . ${FSLDIR}/etc/fslconf/fsl.sh
+    export FSLDEVDIR=${FSLDIR}
+    export FSLCONFDIR=${FSLDIR}/config
+    echo \
+      "... done."
+    echo \
+      "Launching regular build script ..."
+    cd ${FSLDIR}
+    MAKEOPTIONS="-j {{ self.build_processes }}" ${FSLDIR}/build | 0
+    echo \
+      "... done."
+    echo \
+      "Launching individual builds for the failing subpackages ..."
+    SUBPACKAGES="fslsurface newmesh DiscreteOpt FastPDlib MSMRegLib fdt film MSM ptx2"
+    for subpackage in ${SUBPACKAGES}; \
+    do \
+        cd ${FSLDIR}/src/${subpackage}; \
+        MAKEOPTIONS="-j {{ self.build_processes }}" make install; \
+        cd ${FSLDIR}; \
+    done
+    echo \
+      "... done."
+#    mkdir -p {{ self.install_path }}
+#    echo "Downloading FSL sources ..."
+#    curl -fL {{ self.url }} \
+#    | tar -xz -C {{ self.install_path }} --strip-components 1
