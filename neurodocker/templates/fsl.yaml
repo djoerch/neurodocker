@@ -105,7 +105,7 @@ binaries:
       {%- endif -%}
     {%- endfor %}
     {%- endif %}
-    {% if self.version not in ("5.0.9", "5.0.8") -%}
+    {% if self.version not in ("5.0.9", "5.0.8", "6.0.5.2") -%}
     echo "Installing FSL conda environment ..."
     bash {{ self.install_path }}/etc/fslconf/fslpython_install.sh -f {{ self.install_path }}
     {% endif -%}
