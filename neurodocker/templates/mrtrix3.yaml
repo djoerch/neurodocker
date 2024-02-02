@@ -43,16 +43,23 @@ source:
       repo: https://github.com/MRtrix3/mrtrix3.git
       install_path: /opt/mrtrix3-{{ self.version }}
       build_processes: ""
+      build_tool: "old"
   dependencies:
     apt:
     - ca-certificates
+    - ccache
+    - libfftw3-dev
     - g++
     - gcc
     - git
     - libeigen3-dev
+    - libqt5opengl5-dev
     - make
+    - ninja-build
     - python3
     - python3-numpy
+    - qtbase5-dev
+    - qt5-qmake
     - zlib1g-dev
     yum:
     - eigen3-devel
@@ -73,6 +80,13 @@ source:
     {% if self.version != "master" and self.version != "latest" -%}
     git checkout {{ self.version }}
     {% endif -%}
+    {% if self.build_tool == "old" -%}
     python3 configure -nogui
     echo "Compiling MRtrix3 ..."
     NUMBER_OF_PROCESSORS="{{ self.build_processes }}" python3 build
+    {% elif self.build_tool == "cmake" -%}
+    echo "Compiling MRtrix3 ..."
+    cmake -B build -GNinja -DCMAKE_INSTALL_PREFIX="{{ self.install_path }}"
+    cmake --build build
+    cmake --install build
+    {% endif -%}
